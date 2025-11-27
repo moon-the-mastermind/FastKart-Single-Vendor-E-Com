@@ -80,3 +80,5 @@ def user_profile(request, slug):
     }
         
     return render(request, "authsystem/user_profile.html", context)
+
+     

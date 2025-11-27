@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Environment files
+.env
+
+# Virtual environment
+venv/
+env/
+
+# SQLite database (optional)
+db.sqlite3
+
+# Django static and media
+staticfiles/
+media/
+
+# VSCode settings (optional)
+.vscode/
+
+# Mac OS / Windows junk files
+.DS_Store
+Thumbs.db
