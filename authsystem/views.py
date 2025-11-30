@@ -9,7 +9,7 @@ def signup(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            print(request.POST)
+            
             user = form.save()
 
             email = form.cleaned_data.get("email")
