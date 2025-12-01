@@ -8,6 +8,8 @@ urlpatterns = [
     path("login/", views.login_view, name = "login"),
     path("logout/", views.user_logout, name = "logout"),
     path("profile/<str:slug>", views.user_profile, name = "profile"),
+
+    path("verify/<uidb64>/<token>/", views.verify_email, name="verify_email"),
 ]
 
 if settings.DEBUG:

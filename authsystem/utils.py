@@ -7,7 +7,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 
-def send_verification_url(request, user):
+def send_verification_email(request, user):
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
 

@@ -4,23 +4,20 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from . forms import CustomUserCreationForm, LoginForm
 from .models import CustomUser, UserProfile
+from .utils import send_verification_email
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+
+
 
 def signup(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            
             user = form.save()
-
-            email = form.cleaned_data.get("email")
-            password = form.cleaned_data.get("password1")
-            user = authenticate(request, email = email, password = password)
-            if user:
-                messages.success(request, "Success ! Logging In")
-                login(request, user)
-                return redirect("profile")
-            else:
-                messages.error(request, "User Doesn't Found")
+            send_verification_email(request, user)
+            
+            messages.info(request, "Verification link was sent. Check Your email.")
         else:
             messages.error(request, "Check the form and try again")
     else:
@@ -35,10 +32,17 @@ def login_view(request):
             email = request.POST.get("email")
             password = request.POST.get("password")
             user = authenticate(request, email = email, password = password)
+
             if user is not None:
-                login(request, user)
-                messages.success(request, "Login Success")
-                return redirect("profile", slug= request.user.profile.slug)
+                if user.is_verified:
+                    login(request, user)
+                    messages.success(request, "Login Success")
+                    return redirect("profile", slug = user.profile.slug)
+                else:
+                    messages.error(request, "You're not verified yet. Please Verify your email.")
+                    send_verification_email(request, user)
+                    messages.info(request, "Verification link was sent. Check Your email.")
+
             else:
                 messages.error(request, "Invalid Username or Password")
             
@@ -82,3 +86,18 @@ def user_profile(request, slug):
     return render(request, "authsystem/user_profile.html", context)
 
      
+def verify_email(request, uidb64, token):
+    try:
+        pk = urlsafe_base64_decode(uidb64).decode()
+        user = CustomUser.objects.get(id = pk)
+    except (ValueError, TypeError, OverflowError, CustomUser.DoesNotExist):
+        user = None
+    
+    if user and default_token_generator.check_token(user, token):
+        user.is_verified = True
+        user.save()
+        messages.success(request, "Verification Successful. Redirecting to login page.")
+        return redirect("login")
+    else:
+        messages.error(request, "Link Expired")
+        return redirect("signup")
