@@ -10,6 +10,10 @@ urlpatterns = [
     path("profile/<str:slug>", views.user_profile, name = "profile"),
 
     path("verify/<uidb64>/<token>/", views.verify_email, name="verify_email"),
+    path("reset-password/", views.password_reset, name= "reset-password"),
+    path("reset-password-confirm/<uidb64>/<token>/", views.verify_password_reset_email, name = "verify_password_reset"),
+    path("set-password/", views.new_password, name="newpassword")
+    
 ]
 
 if settings.DEBUG:

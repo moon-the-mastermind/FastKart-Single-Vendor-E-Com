@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib import messages
 from . forms import CustomUserCreationForm, LoginForm
 from .models import CustomUser, UserProfile
-from .utils import send_verification_email
+from .utils import send_verification_email, send_password_reset_email
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 
@@ -54,7 +54,7 @@ def login_view(request):
 @login_required
 def user_logout(request):
     logout(request)
-    return redirect("signup")
+    return redirect("login")
 
 
 def user_profile(request, slug):
@@ -101,3 +101,48 @@ def verify_email(request, uidb64, token):
     else:
         messages.error(request, "Link Expired")
         return redirect("signup")
+    
+def password_reset(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        try :
+            user = CustomUser.objects.get(email = email)
+            print(user.username)
+        except CustomUser.DoesNotExist as e:
+            user = None
+            messages.error(request, "No user found.")
+            return redirect("reset-password")
+        
+        send_password_reset_email(request, user)
+        messages.info(request, "Link was sent to your email. Check it for verify.")
+        return redirect("login")
+    return render(request, "authsystem/forgot.html")
+
+def verify_password_reset_email(request, uidb64, token):
+    pk = urlsafe_base64_decode(uidb64).decode()
+
+    try: 
+        user = CustomUser.objects.get(id = pk)
+
+    except (CustomUser.DoesNotExist, TypeError, ValueError, OverflowError, NameError, IndexError) as e :
+        user = None
+        messages.error(request, f"User Doesn't exists. {e}")
+    if user and default_token_generator.check_token(user, token):
+        user.is_verified = True
+        user.save()
+
+        return redirect("newpassword")
+
+def new_password(request):
+    if request.method == "POST":
+        password = request.POST.get("password")
+        user = request.user
+        user.set_password(password)
+        user.save()
+        update_session_auth_hash(request, user)
+        messages.success(request, "Password changes successfully.")
+        return redirect("profile",user.profile.slug)
+    return render(request, "authsystem/newpassword.html")
+
+
+        
