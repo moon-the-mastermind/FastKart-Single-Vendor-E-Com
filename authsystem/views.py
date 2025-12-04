@@ -144,5 +144,4 @@ def new_password(request):
         return redirect("profile",user.profile.slug)
     return render(request, "authsystem/newpassword.html")
 
-
         
